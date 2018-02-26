@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+   *{list-style-type:none; }
+   .shanchu{text-decoration:line-through;color:#ccc; }
+   .hideFirst span{display: none}
+   .inputText{display: none;}
+   .hideFirst .inputText{display: inline-block}
+  </style>
+</head>
+<body>
+<div id="example" >
+  <P>添加任务:</P>
+  <input type="text" placeholder="例如：xxxx" @keyup.13="tianjia" v-model="tianjianeirong">
+  <br>
+  <div v-show="list.length"><span>{{nochecked}}个任务未完成</span> <a href="#all">所有任务</a><a href="#unfinished">未完成的任务</a><a href="#finished">完成的任务</a></div>
+    <P>任务列表:</P>
+  <ul>
+    <span v-show="!list.length">还没有添加任务</span>
+    <li  v-for="item in hashChange" :class="{shanchu:item.panduan,hideFirst:changeItem===item}"  @dblclick="hideShowChange(item)"><input type="checkbox" v-model="item.panduan" ><span>{{item.title}}  </span> 
+      <input     v-focus="changeItem===item" 
+                type="text" class="inputText" 
+                v-model="item.title" 
+                @blur="blurFunction" 
+                @keyup.13="blurFunction"
+                @keyup.esc="escFunction(item)"
+                />
+     <button @click="deletex(item)">删除</button>
+  
+    </li>
+  </ul>
+  
+</div>
+
+
+ 
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script> 
+var store={
+  save(key,value){
+    localStorage.setItem(key,JSON.stringify(value));
+  },
+  fetch(key){
+    return JSON.parse(localStorage.getItem(key)) ||[] ;
+  }
+
+
+}
+
+
+// 创建根实例
+ 
+var list=store.fetch("sotrage")
+ 
+  var filter={
+        all:function(){
+          return list;
+        },
+        unfinished:function(){
+          return list.filter(function(item){
+            return !item.panduan
+          })},
+          finished:function(){
+            return list.filter(function(item){
+              return item.panduan
+            })
+              }
+          }
+
+
+var vm=new Vue({
+  el: '#example',
+  methods:{
+  
+  },
+ data:{
+   list:list,
+   tianjianeirong:"",
+   changeItem:"",
+   beforeContent:"",
+   visibility:"all"
+ },
+ watch:{
+  list:{
+    handler:function(){
+       store.save("sotrage",this.list)
+     },
+     deep:true
+   
+  }
+ 
+ }
+ ,
+ computed:{
+  nochecked:function(){
+    return this.list.filter(function(item){return !item.panduan}).length
+  }
+   ,
+   hashChange:function(){
+     
+          return filter[this.visibility] ? filter[this.visibility](list):filter["all"](list)
+        }
+  
+   }
+ ,
+ methods:{
+   tianjia:function(){
+      
+      this.list.push({title:this.tianjianeirong,panduan:false})
+   },
+   deletex:function(item){
+   this.list.splice(this.list.indexOf(item),1)
+    this.hashChange.splice(this.list.indexOf(item),1)
+   },
+   hideShowChange:function(item){
+        this.changeItem=item;
+        beforeContent=item.title
+   },
+   blurFunction:function(){
+     this.changeItem=""
+   },
+   escFunction:function(item){
+    this.changeItem="";
+    item.title=beforeContent
+   }
+  },
+  directives:{
+    "focus":{
+      update(el,binding){
+        if(binding.value){
+          el.focus() 
+        }
+      }
+    }
+  }
+  
+
+   
+})
+
+function getHash(){
+  var hash=window.location.hash.slice(1)
+  vm.visibility=hash
+}
+
+getHash()
+window.onhashchange=function(){
+  getHash()
+}
+
+ 
+</script>
+
+</body>
+</html>
